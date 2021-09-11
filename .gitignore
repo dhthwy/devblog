@@ -23,7 +23,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
+yarn.lock
 # dist
 /dist
 
@@ -32,3 +32,5 @@ yarn-error.log*
 
 # mdx
 .mdx-data
+
+next-env.d.ts
