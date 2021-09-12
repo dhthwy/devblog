@@ -1,48 +1,111 @@
 import Layout from "../components/Layout";
-import BasicMeta from "../components/meta/BasicMeta";
-import OpenGraphMeta from "../components/meta/OpenGraphMeta";
-import TwitterCardMeta from "../components/meta/TwitterCardMeta";
-import { SocialList } from "../components/SocialList";
+import axios from "axios";
+import React, { useState } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
+
+const FORMSPARK_URL = "https://submit-form.com/G0IB0VxZ";
+const GOOGLE_RECAPTCHA_SITEKEY = "6Ld9_locAAAAAO-2OSRPp9k2KtxhEgZaQOgC0itq";
 
 export default function Contact() {
+  const [isSubmitting, setSubmitting] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitMessage, setSubmitMessage] = useState("");
+  const recaptchaRef = React.useRef<ReCAPTCHA>();
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    axios
+      .post(FORMSPARK_URL, {
+        name: name,
+        email: email,
+        message: message,
+        "g-recaptcha-response": recaptchaRef.current.getValue(),
+      })
+      .then(function (response) {
+        setSubmitMessage("Your message has been sent.");
+        //  console.log(response);
+      })
+      .catch(function (response) {
+        setSubmitMessage(
+          "An error has occurred while attempting to send your message."
+        );
+        console.error(response);
+      })
+      .finally(() => {
+        recaptchaRef.current.reset();
+        setSubmitting(false);
+      });
+  };
+
+  const onReCAPTCHAChange = (captchaCode) => {
+    // If the reCAPTCHA code is null or undefined indicating that
+    // the reCAPTCHA was expired then return early
+    if (!captchaCode) {
+      setSubmitting(false);
+      return;
+    }
+    setSubmitting(true);
+  };
+
   return (
     <Layout>
-      <BasicMeta url={"/"} />
-      <OpenGraphMeta url={"/"} />
-      <TwitterCardMeta url={"/"} />
       <div className="container">
         <div>
-          <form
-            name="contact"
-            method="POST"
-            action="https://submit-form.com/G0IB0VxZ"
-          >
+          <form name="contact" onSubmit={onSubmit}>
+            <div className="fancy">
+              <label id="submitMessage" htmlFor="submitMessage">
+                {submitMessage}
+              </label>
+            </div>
             <div className="itemGrid">
               <label htmlFor="name">Name</label>
               <div>
-                <input type="text" id="name" name="name" />
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
               </div>
             </div>
             <div className="itemGrid">
               <label htmlFor="email">Email</label>
               <div>
-                <input type="text" id="email" name="email" />
+                <input
+                  type="text"
+                  id="email"
+                  name="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
             </div>
             <div className="messageItemGrid">
               <label htmlFor="message">Message</label>
               <div className="messageArea">
-                <textarea id="message" name="message"></textarea>
+                <textarea
+                  id="message"
+                  name="message"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                ></textarea>
               </div>
             </div>
             <div className="itemGrid">
-              <input
-                type="hidden"
-                name="_redirect"
-                value="https://donhathaway.com/"
+              <ReCAPTCHA
+                sitekey={GOOGLE_RECAPTCHA_SITEKEY}
+                ref={recaptchaRef}
+                onChange={onReCAPTCHAChange}
               />
+            </div>
+            <div className="itemGrid">
               <input type="hidden" name="_append" value="false" />
-              <button type="submit">Send</button>
+              <button type="submit" disabled={!isSubmitting}>
+                Send
+              </button>
             </div>
           </form>
         </div>
@@ -76,7 +139,7 @@ export default function Contact() {
         form {
           display: grid;
           grid-template-columns: auto;
-          grid-template-rows: auto auto auto auto;
+          grid-template-rows: auto auto auto auto auto auto;
           grid-gap: 5px;
           align-items: left;
           justify-content: left;
